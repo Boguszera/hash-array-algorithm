@@ -1,5 +1,5 @@
 import random
-
+import time
 
 class HashTable:
     def __init__(self, size):
@@ -8,8 +8,9 @@ class HashTable:
         self.table = [[] for _ in range(size)]  # każda komórka to lista (łańcuch)
 
     def hash_function(self, key):
-        # Funkcja haszująca (modulo), oblicza indeks
-        return key % self.size
+        A = 0.6180339887
+        fractional_part = (key * A) % 1
+        return int(self.size * fractional_part)
 
     def insert(self, key, value):
         # Wstawianie elementu do tablicy
@@ -34,22 +35,49 @@ class HashTable:
 
         return (min_key, min_value), (max_key, max_value)
 
+# Pomiar czasu działania
+def measure_performance(num_companies, table_size):
+    hash_table = HashTable(table_size)
 
-# Generowanie losowych danych (id_firmy, wynik_finansowy)
-num_companies = random.randint(100, 1000)  # Liczba firm
+    # Generowanie danych dla firm
+    companies = [
+        (random.randint(1000, 9999), random.randint(1, 100000000))
+        for _ in range(num_companies)
+    ]
 
-# Tworzymy tablicę haszującą o rozmiarze 10
-hash_table = HashTable(10)
+    # Wstawianie elementów i pomiar czasu
+    start_insert = time.time()
+    for company_id, financial_result in companies:
+        hash_table.insert(company_id, financial_result)
+    end_insert = time.time()
 
-# Generujemy dane dla firm
-for _ in range(num_companies):
-    company_id = random.randint(1000, 9999)  # Losowy identyfikator firmy (np. NIP)
-    financial_result = random.randint(1, 100000000)  # Losowy wynik finansowy
-    print(company_id, financial_result)
-    hash_table.insert(company_id, financial_result)
+    # Znajdowanie min i max i pomiar czasu
+    start_find = time.time()
+    min_element, max_element = hash_table.find_min_max()
+    end_find = time.time()
 
-# Znajdujemy najmniejszy i największy wynik finansowy
-min_element, max_element = hash_table.find_min_max()
+    return {
+        "num_companies": num_companies,
+        "table_size": table_size,
+        "insert_time": end_insert - start_insert,
+        "find_time": end_find - start_find,
+        "min_element": min_element,
+        "max_element": max_element,
+    }
 
-print(f"Najmniejszy wynik finansowy: Firma {min_element[0]} z wynikiem {min_element[1]} zl")
-print(f"Najwiekszy wynik finansowy: Firma {max_element[0]} z wynikiem {max_element[1]} zl")
+# Przeprowadzanie testów
+def run_tests():
+    test_results = []
+    for num_companies in [100, 1000, 10000, 100000]:
+        for table_size in [10, 101, 1009, 10007]:  # Różne rozmiary tablicy (liczby pierwsze)
+            result = measure_performance(num_companies, table_size)
+            test_results.append(result)
+            print(f"Liczba firm: {num_companies}, Rozmiar tablicy: {table_size}")
+            print(f"Czas wstawiania: {result['insert_time']:.6f}s, Czas znajdowania min/max: {result['find_time']:.6f}s")
+            print(f"Najmniejszy element: {result['min_element']}, Największy element: {result['max_element']}")
+            print("-" * 50)
+    return test_results
+
+# Uruchamianie testów
+if __name__ == "__main__":
+    results = run_tests()
